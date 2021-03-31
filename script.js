@@ -1,3 +1,4 @@
+var options = {enableHighAccuracy: true, timeout: 100, maximumAge: 0};
 window.onload = getMyLocation;
 
 function getMyLocation() {
@@ -5,7 +6,7 @@ function getMyLocation() {
     var watchId = null;
 
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(displayLocation, displayError);
+        navigator.geolocation.getCurrentPosition(displayLocation, displayError, options);
         var watchButton = document.getElementById("watch");
         watchButton.onclick = watchLocation;
         var clearWatchButton = document.getElementById("clearWatch");
@@ -21,6 +22,7 @@ function getMyLocation() {
         
         var div = document.getElementById("location");
         div.innerHTML = "You are at Latitude: " + latitude + ", Longtitude: " + longitude;
+        div.innerHTML += ' (found in ' + options.timeout + ' milliseconds)';
         div.innerHTML += " (with " + position.coords.accuracy + " meters accuracy)";
 
         var km = computerDistance(position.coords, ourCoords);
@@ -28,7 +30,10 @@ function getMyLocation() {
         distance.innerHTML = "You are " + km + " km from the WickedlySmart HQ";
         
         if (map == null) {
-        showMap(position.coords);
+            showMap(position.coords);
+        }
+        else {
+            scrollMapToPosition(position.coords);
         }
     }
     
@@ -45,6 +50,9 @@ function getMyLocation() {
         }
         var div = document.getElementById("location");
         div.innerHTML = errorMessage;
+        options.timeout += 100;
+        navigator.geolocation.getCurrentPosition(displayLocation, displayError, options);
+        div.innerHTML += ' ... checking again with timeout=' + options.timeout;
     }
     
     function computerDistance(startCoords, destCoords) {
@@ -106,6 +114,18 @@ function getMyLocation() {
         google.maps.event.addListener(marker, "click", function() {
                 infoWindow.open(map);
         });
+    }
+
+    function scrollMapToPosition(coords) {
+        var latitude = coords.latitude;
+        var longitude = coords.longitude;
+    
+        var latlong = new google.maps.LatLng(latitude, longitude);
+        map.panTo(latlong);
+    
+        // add the new marker
+        addMarker(map, latlong, "Your new location", "You moved to: " + 
+                                    latitude + ", " + longitude);
     }
 
     function watchLocation() {
